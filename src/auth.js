@@ -35,6 +35,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
       clientSecret: async () => await getAppleToken(),
+      authorization: {
+        url: "https://appleid.apple.com/auth/authorize",
+        params: {
+          response_type: "code",
+          response_mode: "query",
+        },
+      },
       profile(profile) {
         return {
           id: profile.sub,
