@@ -29,21 +29,17 @@ const getAppleToken = async () => {
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  /**
-   * 애플 로그인 시 쿠키옵션 적용해 주어야 callbackUrl이 정상 작동
-   */
   cookies: {
-    callbackUrl: {
-      name: `__Secure-next-auth.callback-url`,
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
       options: {
-        httpOnly: false,
+        httpOnly: true,
         sameSite: "none",
         path: "/",
         secure: true,
       },
     },
   },
-
   secret: process.env.AUTH_SECRET,
 
   providers: [
@@ -52,11 +48,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
       clientSecret: async () => await getAppleToken(),
+      wellKnown: "https://appleid.apple.com/.well-known/openid-configuration",
+      checks: ["pkce"],
+      token: {
+        url: `https://appleid.apple.com/auth/token`,
+      },
+      client: {
+        token_endpoint_auth_method: "client_secret_post",
+      },
+      authorization: {
+        url: "https://appleid.apple.com/auth/authorize",
+        params: {
+          scope: "",
+          response_mode: "form_post",
+          response_type: "code",
+          state: crypto.randomUUID(),
+        },
+      },
       profile(profile) {
         return {
           id: profile.sub,
           email: profile.email,
-          from: "apple",
+          email: profile.email,
+          image: "",
         };
       },
     }),
