@@ -9,19 +9,25 @@ import { SignJWT } from "jose";
 const getAppleToken = async () => {
   const key = `-----BEGIN PRIVATE KEY-----\n${process.env.AUTH_APPLE_SECRET}\n-----END PRIVATE KEY-----`;
 
-  const token = new SignJWT({})
-    .setAudience("https://appleid.apple.com")
-    .setIssuer(process.env.AUTH_APPLE_TEAM_ID)
-    .setIssuedAt(Date.now() / 1000)
-    .setExpirationTime(Date.now() / 1000 + 3600 * 2)
-    .setSubject(process.env.AUTH_APPLE_ID)
-    .setProtectedHeader({
-      alg: "ES256",
-      kid: process.env.AUTH_APPLE_KEY_ID,
-    })
-    .sign(createPrivateKey(key.replace(/\\n/g, "\n")));
+  try {
+    const token = new SignJWT({})
+      .setAudience("https://appleid.apple.com")
+      .setIssuer(process.env.AUTH_APPLE_TEAM_ID)
+      .setIssuedAt(Math.floor(Date.now() / 1000))
+      .setExpirationTime(Math.floor(Date.now() / 1000) + 3600 * 2)
+      .setSubject(process.env.AUTH_APPLE_ID)
+      .setProtectedHeader({
+        alg: "ES256",
+        kid: process.env.AUTH_APPLE_KEY_ID,
+      })
+      .sign(createPrivateKey(key));
 
-  return token;
+    console.log(token);
+
+    return token;
+  } catch (error) {
+    console.log("error", error);
+  }
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -50,7 +56,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Naver,
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
-      clientSecret: async () => await getAppleToken(),
+      clientSecret: async () => {
+        try {
+          const token = await getAppleToken();
+          console.log("Client Secret:", token); // 디버깅
+          return token;
+        } catch (error) {
+          console.error("Error in clientSecret generation:", error);
+          throw new Error("Failed to generate clientSecret");
+        }
+      },
       profile(profile) {
         return {
           id: profile.sub,
@@ -63,9 +78,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   pages: {
     signIn: "/",
-    error: "/asdfsad",
+    // error: "/asdfsad",
   },
   secret: process.env.AUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }) {
+      return { ...token, ...user };
+    },
+    async session({ session, token }) {
+      session.user = token;
+      return session;
+    },
+  },
   // session: {
   //   strategy: "jwt",
   //   maxAge: 30, // 30초
