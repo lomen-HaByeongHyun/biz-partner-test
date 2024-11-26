@@ -6,7 +6,7 @@ import { createPrivateKey } from "crypto";
 import process from "process";
 import { SignJWT } from "jose";
 
-async function getAppleToken() {
+const getAppleToken = async () => {
   const key = `-----BEGIN PRIVATE KEY-----\n${process.env.AUTH_APPLE_SECRET}\n-----END PRIVATE KEY-----`;
 
   try {
@@ -26,11 +26,26 @@ async function getAppleToken() {
   } catch (error) {
     console.log("error", error);
   }
-}
-
-console.log("clientKey", await getAppleToken());
+};
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  /**
+   * 애플 로그인 시 쿠키옵션 적용해 주어야 callbackUrl이 정상 작동
+   */
+  cookies: {
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        httpOnly: false,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
+
+  secret: process.env.AUTH_SECRET,
+
   providers: [
     Kakao,
     Naver,
