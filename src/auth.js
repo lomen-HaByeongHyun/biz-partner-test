@@ -38,15 +38,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorization: {
         url: "https://appleid.apple.com/auth/authorize",
         params: {
-          response_type: "code",
-          response_mode: "query",
+          scope: "name email",
+          response_mode: "form_post",
         },
       },
       profile(profile) {
         return {
           id: profile.sub,
           email: profile.email,
-          from: "apple",
+          name: profile.name,
         };
       },
     }),
