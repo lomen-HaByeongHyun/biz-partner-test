@@ -2,27 +2,27 @@ import NextAuth from "next-auth";
 import Kakao from "next-auth/providers/kakao";
 import Naver from "next-auth/providers/naver";
 import Apple from "next-auth/providers/apple";
-// import { createPrivateKey } from "crypto";
+import { createPrivateKey } from "crypto";
 import process from "process";
-// import { SignJWT } from "jose";
+import { SignJWT } from "jose";
 
-// const getAppleToken = async () => {
-//   const key = `-----BEGIN PRIVATE KEY-----\n${process.env.AUTH_APPLE_SECRET}\n-----END PRIVATE KEY-----`;
+const getAppleToken = async () => {
+  const key = `-----BEGIN PRIVATE KEY-----\n${process.env.AUTH_APPLE_SECRET}\n-----END PRIVATE KEY-----`;
 
-//   const token = new SignJWT({})
-//     .setAudience("https://appleid.apple.com")
-//     .setIssuer(process.env.AUTH_APPLE_TEAM_ID)
-//     .setIssuedAt(Date.now() / 1000)
-//     .setExpirationTime(Date.now() / 1000 + 3600 * 2)
-//     .setSubject(process.env.AUTH_APPLE_ID)
-//     .setProtectedHeader({
-//       alg: "ES256",
-//       kid: process.env.AUTH_APPLE_KEY_ID,
-//     })
-//     .sign(createPrivateKey(key));
+  const token = new SignJWT({})
+    .setAudience("https://appleid.apple.com")
+    .setIssuer(process.env.AUTH_APPLE_TEAM_ID)
+    .setIssuedAt(Date.now() / 1000)
+    .setExpirationTime(Date.now() / 1000 + 3600 * 2)
+    .setSubject(process.env.AUTH_APPLE_ID)
+    .setProtectedHeader({
+      alg: "ES256",
+      kid: process.env.AUTH_APPLE_KEY_ID,
+    })
+    .sign(createPrivateKey(key.replace(/\\n/g, "\n")));
 
-//   return token;
-// };
+  return token;
+};
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   cookies: {
@@ -50,8 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Naver,
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
-      // clientSecret: async () => await getAppleToken(),
-      clientSecret: process.env.AUTH_APPLE_SECRET,
+      clientSecret: async () => await getAppleToken(),
       profile(profile) {
         return {
           id: profile.sub,
@@ -66,6 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/",
     error: "/asdfsad",
   },
+  secret: process.env.AUTH_SECRET,
   // session: {
   //   strategy: "jwt",
   //   maxAge: 30, // 30초
