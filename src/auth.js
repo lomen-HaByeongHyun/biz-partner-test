@@ -22,8 +22,6 @@ const getAppleToken = async () => {
       })
       .sign(createPrivateKey(key));
 
-    console.log(token);
-
     return token;
   } catch (error) {
     console.log("error", error);
@@ -59,6 +57,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: async () => {
         try {
           const token = await getAppleToken();
+          if (typeof token !== "string") {
+            throw new Error("Generated token is not a string");
+          }
           console.log("Client Secret:", token); // 디버깅
           return token;
         } catch (error) {
