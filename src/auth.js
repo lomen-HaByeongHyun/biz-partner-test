@@ -1,13 +1,17 @@
 import NextAuth from "next-auth";
-import AppleProvider from "next-auth/providers/apple";
+import Kakao from "next-auth/providers/kakao";
+import Naver from "next-auth/providers/naver";
+import Apple from "next-auth/providers/apple";
 import { createPrivateKey } from "crypto";
+import process from "process";
 import { SignJWT } from "jose";
 
 async function getAppleToken() {
   const key = `-----BEGIN PRIVATE KEY-----\n${process.env.AUTH_APPLE_SECRET}\n-----END PRIVATE KEY-----`;
 
   try {
-    const token = await new SignJWT({})
+    console.log("success");
+    return new SignJWT({})
       .setAudience("https://appleid.apple.com")
       .setIssuer(process.env.APPLE_TEAM_ID)
       .setIssuedAt(Math.floor(Date.now() / 1000))
@@ -18,18 +22,16 @@ async function getAppleToken() {
         kid: process.env.APPLE_KEY_ID,
       })
       .sign(createPrivateKey(key));
-
-    console.log("Generated Apple Token:", token); // 디버깅용 로그
-    return token;
   } catch (error) {
-    console.error("Error generating Apple Token:", error);
-    throw error;
+    console.log("error", error);
   }
 }
 
-export default NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    AppleProvider({
+    Kakao,
+    Naver,
+    Apple({
       clientId: process.env.APPLE_ID,
       clientSecret: async () => await getAppleToken(),
       profile(profile) {
@@ -41,4 +43,21 @@ export default NextAuth({
       },
     }),
   ],
+  // session: {
+  //   strategy: "jwt",
+  //   maxAge: 30, // 30초
+  // },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // 로그인 성공 시 /login으로 이동
+      console.log(url, baseUrl);
+
+      if (url === "/auth/callback/kakao") {
+        return `${baseUrl}/login`;
+      }
+
+      // 로그인 실패 시 메인 페이지로 이동
+      return `${baseUrl}/`;
+    },
+  },
 });
