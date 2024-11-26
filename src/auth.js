@@ -29,6 +29,7 @@ const getAppleToken = async () => {
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET,
   cookies: {
     pkceCodeVerifier: {
       name: "next-auth.pkce.code_verifier",
@@ -40,7 +41,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
   },
-  secret: process.env.AUTH_SECRET,
 
   providers: [
     Kakao,
@@ -48,18 +48,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
       clientSecret: async () => await getAppleToken(),
-      wellKnown: "https://appleid.apple.com/.well-known/openid-configuration",
-      checks: ["pkce"],
       token: {
         url: `https://appleid.apple.com/auth/token`,
-      },
-      client: {
-        token_endpoint_auth_method: "client_secret_post",
       },
       authorization: {
         url: "https://appleid.apple.com/auth/authorize",
         params: {
-          scope: "",
           response_mode: "form_post",
           response_type: "code",
           state: crypto.randomUUID(),
@@ -68,7 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       profile(profile) {
         return {
           id: profile.sub,
-          email: profile.email,
+          name: profile.name,
           email: profile.email,
           image: "",
         };
