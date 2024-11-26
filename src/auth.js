@@ -29,42 +29,17 @@ const getAppleToken = async () => {
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET,
-  cookies: {
-    pkceCodeVerifier: {
-      name: "next-auth.pkce.code_verifier",
-      options: {
-        httpOnly: true,
-        sameSite: "none",
-        path: "/",
-        secure: true,
-      },
-    },
-  },
-
   providers: [
     Kakao,
     Naver,
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
       clientSecret: async () => await getAppleToken(),
-      token: {
-        url: `https://appleid.apple.com/auth/token`,
-      },
-      authorization: {
-        url: "https://appleid.apple.com/auth/authorize",
-        params: {
-          response_mode: "form_post",
-          response_type: "code",
-          state: crypto.randomUUID(),
-        },
-      },
       profile(profile) {
         return {
           id: profile.sub,
-          name: profile.name,
           email: profile.email,
-          image: "",
+          from: "apple",
         };
       },
     }),
