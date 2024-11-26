@@ -16,7 +16,9 @@ export default function Home() {
         <button onClick={() => signIn("naver")}>
           NAVER로 로그인 / 회원가입
         </button>
-        <button onClick={() => signIn()}>APPLE로 로그인 / 회원가입</button>
+        <button onClick={() => signIn("apple")}>
+          APPLE로 로그인 / 회원가입
+        </button>
       </div>
       <button onClick={() => signOut()}>로그아웃</button>
 

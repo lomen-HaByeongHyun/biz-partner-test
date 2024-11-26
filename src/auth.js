@@ -29,28 +29,56 @@ const getAppleToken = async () => {
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  cookies: {
+    pkceCodeVerifier: {
+      name: "next-auth.pkce.code_verifier",
+      options: {
+        httpOnly: true,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        httpOnly: false,
+        sameSite: "none",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
+
+  secret: process.env.AUTH_SECRET,
+
   providers: [
     Kakao,
     Naver,
     Apple({
       clientId: process.env.AUTH_APPLE_ID,
       clientSecret: async () => await getAppleToken(),
-      authorization: {
-        url: "https://appleid.apple.com/auth/authorize",
-        params: {
-          scope: "name email",
-          response_mode: "form_post",
-        },
-      },
+      // authorization: {
+      //   url: "https://appleid.apple.com/auth/authorize",
+      //   params: {
+      //     scope: "name email",
+      //     response_mode: "form_post",
+      //   },
+      // },
       profile(profile) {
         return {
           id: profile.sub,
           email: profile.email,
           name: profile.name,
+          from: "apple",
         };
       },
     }),
   ],
+  pages: {
+    signIn: "/",
+    error: "/asdfsad",
+  },
   // session: {
   //   strategy: "jwt",
   //   maxAge: 30, // 30초
